@@ -340,7 +340,7 @@
         watch: {
             $route(newValue, oldValue) {
                 // this.setTags(newValue);
-                console.log("route change:", newValue)
+                // console.log("route change:", newValue)
                 if (newValue == null) {
                     this.$message.error("路由错误")
                     console.log("error route", newValue)
@@ -348,7 +348,7 @@
                 }
                 if (newValue.matched.length != 3 || newValue.matched[1].path != "/edit")
                     return
-                console.log("get params:", newValue.params)
+                // console.log("get params:", newValue.params)
                 if (newValue.params != null)
                     this.currentGapId = newValue.params.pathMatch
             }
@@ -361,7 +361,8 @@
                 chartData: {
                     id: 'mainGap',
                     nodes: [],
-                    connections: []
+                    connections: [],
+                    name: 'mainGap'
                 },
                 cmOptions: {
                     mode: "text/x-csrc",
@@ -456,7 +457,7 @@
                 get() {
                     // let res = this.getCurGap(this.chartData)
                     let res = this.getCurGap()
-                    console.log("res:", res)
+                    // console.log("res:", res)
                     return res;
                 }
             }
@@ -474,7 +475,7 @@
             // })
             // 注册一个删除子图节点触发的删除tag的时间
             bus.$on('delete_tag', (tagId) => {
-                console.log("delete_tag", tagId)
+                // console.log("delete_tag", tagId)
                 for (let i = 0; i < this.tagsList.length; i++) {
                     if (this.tagsList[i].path == "/edit/" + tagId) {
                         this.closeTag(i)
@@ -507,10 +508,8 @@
                     if (this.nodeList[type][i].id == typeId) {
                         if (isInput) {
                             this.nodeList[type][i].outputs[attrIndex].useCount++
-                            console.log(this.nodeList[type][i].inputs[attrIndex])
                         } else {
                             this.nodeList[type][i].inputs[attrIndex].useCount++
-                            console.log(this.nodeList[type][i].outputs[attrIndex])
                         }
                     }
                 }
@@ -546,7 +545,8 @@
                         attrs: [],
                         nodes: [],
                         connections: [],
-                        code: ""
+                        code: "",
+                        icon: "el-icon-place"
                     }
                 } else {
                     if (curNodeIndex < 0 || curNodeIndex >= _self.nodeList[type].length) {
@@ -563,11 +563,17 @@
                 if (type == NodeType.StructNode) {
                     if (isNew) {
                         _self.curNode.name = "struct_" + _self.randomString(6)
+                    } else {
+                        _self.setCodeMirrorValue(_self.$refs.structCode, _self.curNode.code);
                     }
                 } else if (type == NodeType.FlowNode) {
                     if (isNew) {
                         _self.curNode.name = "func_" + _self.randomString(6)
+                    } else {
+                        _self.setCodeMirrorValue(_self.$refs.flowCode, _self.curNode.code);
+
                     }
+                    _self.activeTab = 'second'
                 } else if (type == NodeType.SubGraphNode) {
                     if (isNew) {
                         _self.curNode.name = "subGraph_" + _self.randomString(6)
@@ -588,7 +594,6 @@
                 let attrs = []
                 if (this.curEditAttrType == 0) {
                     attrs = this.curNode.attrs;
-                    console.log(attrs === this.curNode.attrs)
                 } else if (this.curEditAttrType == 1) {
                     attrs = this.curNode.inputs;
                 } else if (this.curEditAttrType == 2) {
@@ -613,9 +618,9 @@
                     // console.log("this attrs:", attrs)
                     if (this.curAttr.isNew) {
                         attrs.push(this.curAttr)
-                        console.log("this.curAttr:", this.curAttr)
-                        console.log("this attrs:", attrs)
-                        console.log("this node:", this.curNode)
+                        // console.log("this.curAttr:", this.curAttr)
+                        // console.log("this attrs:", attrs)
+                        // console.log("this node:", this.curNode)
                     } else {
 
                         if (this.editIndex >= 0 && this.editIndex < attrs.length) {
@@ -633,7 +638,7 @@
                     }
                 }
                 this.innerVisible = false;
-                console.log(this.curNode)
+                // console.log(this.curNode)
             },
             // 删除属性
             deleteStructAttr: function (index, row, type) {
@@ -791,7 +796,7 @@
             },
             setCodeMirrorValue(codemirrorObj, code) {
                 if (typeof (codemirrorObj) == "undefined") {
-                    console.log("undefined")
+                    // console.log("undefined")
                     return
                 }
                 codemirrorObj.codemirror.setValue(code)
@@ -1056,7 +1061,8 @@
                 this.$confirm('是否保存使用上传的数据替代当前编辑的数据?', '提示', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
-                    type: 'warning'
+                    type: 'warning',
+                    closeOnClickModal: false
                 }).then(() => {
                     let reader = new FileReader()
                     reader.readAsText(file.raw)
@@ -1146,6 +1152,7 @@
                     return true
                 }
                 let connLegal = true
+                // 这里要判断边是否携带参数信息，不携带则认为是无效边
                 chartData.connections.every((item, index, array) => {
                     console.log(item); //返回1,2
                     if (typeof item.attrs == "undefined" || item.attrs.length == 0) {
@@ -1221,14 +1228,6 @@
                     return false;
                 }
 
-                // // 递归判断子图节点
-                // for (let key in chartData.nodes) {
-                //     let node = chartData.nodes[key]
-                //     if (node.type != this.NodeType.SubGraphNode)
-                //         continue
-                //     if (!this.judgeConnectionLegality(node))
-                //         return false
-                // }
                 return true;
 
 
@@ -1241,11 +1240,13 @@
                     this.$message.info("图为空")
                     return
                 }
+                let timeBefore = new Date()
                 let judgeRes = this.judgeConnectionLegality(this.chartData)
                 for (let i = 0; i < this.nodeList[NodeType.SubGraphNode].length && judgeRes; i++) {
                     judgeRes &= this.judgeConnectionLegality(this.nodeList[NodeType.SubGraphNode][i])
-                    console.log("get judgeRes:", judgeRes)
                 }
+                let timeAfter = new Date()
+                console.log("judge time:",timeAfter.getTime() - timeBefore.getTime() , " ms")
                 console.log("judge res: ", judgeRes)
                 if (judgeRes) {
                     // this.$message.success("检测通过")
@@ -1258,7 +1259,8 @@
                         }
                     }).then(response => {
                         console.log("response:", response)
-                        fileDownload(response.data, 'dfcCode.c')
+                        let fileName = "dfcCode_" + this.getNowTimeStr() + ".c"
+                        fileDownload(response.data, fileName)
                         _self.$message.success("生成代码成功")
                     }).catch(error => {
                         console.log("error: ", error)
@@ -1280,6 +1282,21 @@
                 } else {
                     this.$router.push('/edit/mainGap');
                 }
+            },
+            getNowTimeStr() {
+                let date = new Date();
+                let month = date.getMonth() < 9 ? "0" : ""
+                month += (date.getMonth() + 1)
+                let day = date.getDate() < 10 ? "0" : ""
+                day += date.getDate()
+                let hour = date.getHours() < 10 ? "0" : ""
+                hour += date.getHours()
+                let minute = date.getMinutes() < 10 ? "0" : ""
+                minute += date.getMinutes()
+                let second = date.getSeconds() < 10 ? "0" : ""
+                second += date.getSeconds()
+                return date.getFullYear() + "-" + month + "-" + day + "_"
+                    + hour + "-" + minute + "-" + second
             }
         },
         components: {

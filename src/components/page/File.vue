@@ -85,7 +85,8 @@
                 }
             }
             var validateDir = (rule, value, callback) => {
-                let regRule = /^(([a-z0-9A-Z_\\.]*)(\/))*$/
+                let regRule = /^(.*\/)*$/
+                // let regRule = /^(([a-z0-9A-Z_:\\.]*)(\/))*$/
                 if (value == "") {
                     callback(new Error('文件位置为空'));
                 } else if (!regRule.test(value)) {
@@ -95,7 +96,9 @@
                 }
             };
             var validateFilePath = (rule, value, callback) => {
-                let regRule = /^(([a-z0-9A-Z_\\.]*)(\/))*([a-z0-9A-Z_]+\.[a-z0-9A-Z_]+)$/
+
+                let regRule = /^(.*\/)*(.+\..+)$/
+                // let regRule = /^(([a-z0-9A-Z_:\\.-]*)(\/))*([a-z0-9A-Z-_:]+\.[a-z0-9A-Z_]+)$/
                 if (value == "") {
                     callback(new Error('文件位置为空'));
                 } else if (!regRule.test(value)) {

@@ -5,10 +5,11 @@ Vue.use(Router);
 
 // 在这里定义全局的路由
 export default new Router({
+        mode: 'hash',
         routes: [
             {
-                path:'/',
-                redirect:'/home'
+                path: '/',
+                redirect: '/home'
             },
             {
                 path: '/',
@@ -18,13 +19,13 @@ export default new Router({
                     {
                         path: '/home',
                         component: () => import('../components/page/Index.vue'),
-                        meta: { title: '系统首页' }
+                        meta: {title: '系统首页'}
                     },
                     {
                         path: '/edit',
                         component: () => import('../components/page/Edit.vue'),
-                        meta: { title: '绘制页' },
-                        children:[
+                        meta: {title: '绘制页'},
+                        children: [
                             {
                                 path: '*',
                                 component: () => import('../components/common/PaintArea')
@@ -34,7 +35,7 @@ export default new Router({
                     {
                         path: '/file',
                         component: () => import('../components/page/File.vue'),
-                        meta: { title: '文件上传页' }
+                        meta: {title: '文件上传页'}
 
                     }
                 ]
@@ -42,6 +43,5 @@ export default new Router({
 
         ]
     }
-
 )
 
