@@ -2,7 +2,7 @@
     <el-container class="container" id="work-container">
 
         <!--            属性修改弹窗-->
-        <el-dialog width="60%" title="属性编辑" :visible.sync="innerVisible">
+        <el-dialog width="60%" title="属性编辑" :visible.sync="innerVisible" :close-on-click-modal=false>
             <el-form ref="curAttr" label-width="100px">
                 <el-form-item label="类型">
                     <el-select v-model="curAttr.type">
@@ -25,7 +25,7 @@
             </div>
         </el-dialog>
         <!--            类节点弹窗-->
-        <el-dialog title="结构体节点信息编辑" :visible.sync="dialogVisibleList[NodeType.StructNode]">
+        <el-dialog title="结构体节点信息编辑" :visible.sync="dialogVisibleList[NodeType.StructNode]" :close-on-click-modal=false>
             <el-form ref="curNode" label-width="150px">
                 <el-form-item label="结构体名称">
                     <el-input v-model="curNode.name"></el-input>
@@ -62,7 +62,7 @@
             </div>
         </el-dialog>
         <!--            数据流节点弹窗-->
-        <el-dialog title="数据流节点信息编辑" :visible.sync="dialogVisibleList[NodeType.FlowNode]">
+        <el-dialog title="数据流节点信息编辑" :visible.sync="dialogVisibleList[NodeType.FlowNode]" :close-on-click-modal=false>
             <el-tabs v-model="activeTab">
                 <el-tab-pane label="数据流函数信息" name="first">
                     <el-form>
@@ -131,7 +131,7 @@
             </div>
         </el-dialog>
         <!--            子图节点弹窗-->
-        <el-dialog title="子图节点信息编辑" :visible.sync="dialogVisibleList[NodeType.SubGraphNode]">
+        <el-dialog title="子图节点信息编辑" :visible.sync="dialogVisibleList[NodeType.SubGraphNode]" :close-on-click-modal=false>
             <el-form>
                 <el-form-item label="子图名">
                     <el-input v-model="curNode.name"></el-input>
@@ -1259,8 +1259,8 @@
                         }
                     }).then(response => {
                         console.log("response:", response)
-                        let fileName = "dfcCode_" + this.getNowTimeStr() + ".c"
-                        fileDownload(response.data, fileName)
+                        let fileName = "dfcCode_" + this.getNowTimeStr() + ".dfc"
+                        // fileDownload(response.data, fileName)
                         _self.$message.success("生成代码成功")
                     }).catch(error => {
                         console.log("error: ", error)

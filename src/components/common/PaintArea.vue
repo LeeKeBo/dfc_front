@@ -5,7 +5,7 @@
                         @edit="editNode(item,index)"></chart-node>
         </div>
         <!--            属性修改弹窗-->
-        <el-dialog width="60%" title="添加属性" :visible.sync="innerVisible">
+        <el-dialog width="60%" title="添加属性" :visible.sync="innerVisible" :close-on-click-modal=false>
             <el-form ref="curAttr" label-width="100px">
                 <el-form-item label="类型">
                     <el-select v-model="curAttr.type">
@@ -28,7 +28,7 @@
             </div>
         </el-dialog>
         <!--            数据流节点弹窗层-->
-        <el-dialog title="数据流节点信息编辑" :visible.sync="flowNodeDialogVisible">
+        <el-dialog title="数据流节点信息编辑" :visible.sync="flowNodeDialogVisible" :close-on-click-modal=false>
             <el-form>
                 <el-form-item label="数据流节点名">
                     <el-input v-model="curNode.name"></el-input>
@@ -57,7 +57,7 @@
             </div>
         </el-dialog>
 
-        <el-dialog title="子图节点信息编辑" :visible.sync="subGapDialogVisible">
+        <el-dialog title="子图节点信息编辑" :visible.sync="subGapDialogVisible" :close-on-click-modal=false>
             <el-form>
                 <el-form-item label="子图名">
                     <el-input v-model="curNode.name"></el-input>
@@ -89,7 +89,7 @@
         </el-dialog>
 
         <!--            系统预设节点弹窗-->
-        <el-dialog title="节点信息查看" :visible.sync="systemNodeDialogVisible">
+        <el-dialog title="节点信息查看" :visible.sync="systemNodeDialogVisible" :close-on-click-modal=false>
             <el-form>
                 <el-form-item label="节点名">
                     <span>{{curNode.name}}</span>
@@ -119,7 +119,7 @@
         </el-dialog>
 
         <!--            连线属性修改弹窗-->
-        <el-dialog title="连线属性" :visible.sync="connectionVisible">
+        <el-dialog title="连线属性" :visible.sync="connectionVisible" :close-on-click-modal=false>
 
             <el-table
                     :data="curConn.attrs"
