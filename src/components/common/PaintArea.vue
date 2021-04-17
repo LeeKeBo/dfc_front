@@ -271,7 +271,7 @@
             },
             // 根据节点ID获取图中的节点
             curNodeInGraph() {
-                console.log("graph nodes:", this.chartData.nodes)
+                // console.log("graph nodes:", this.chartData.nodes)
                 return function (nodeId) {
                     return this.chartData.nodes.find(item => {
                         return item.id == nodeId
@@ -304,25 +304,21 @@
 
         },
         updated() {
-            console.log("updated")
         },
         mounted() {
-            console.log("mounted paintArea")
-            console.log("get chartData:", this.chartData)
+            // console.log("mounted paintArea")
+            // console.log("get chartData:", this.chartData)
             if (this.chartData == null) {
                 // this.chartData = {}
-                console.log("error")
                 this.chartData.nodes = []
                 this.chartData.connections = []
-                console.log("get null chartData")
             }
-            console.log("nodes:", this.chartData.nodes)
+            // console.log("nodes:", this.chartData.nodes)
             const _self = this;
             // $(".chart-node").draggable({helper:"clone",revert: "invalid", cursor: 'pointer'});
             // $("#test-drag").draggable()
             // let instance = this.$jsPlumb.getInstance()
             this.$jsPlumb.ready(() => {
-                console.log("jsplumb is ready")
                 let instance = _self.$jsPlumb.getInstance({
                     Endpoint: [
                         "Blank",
@@ -351,7 +347,7 @@
 
                     });
                 instance.bind("beforeDrop", function (info) {
-                    console.log("beforeDrop", info);
+                    // console.log("beforeDrop", info);
                     // 判断是否已有该连接
                     let hasSameConn = false;
                     _self.chartData.connections.some(function (item) {
@@ -360,14 +356,11 @@
                             hasSameConn = true;
                         }
                     });
-                    console.log("hasSameConn:", hasSameConn)
                     if (!hasSameConn) {
                         let sourceItem = _self.curNodeInGraph(info.sourceId)
                         let targetItem = _self.curNodeInGraph(info.targetId)
-                        console.log("sourceItem:", sourceItem)
                         if (typeof sourceItem == "undefined" || typeof targetItem == "undefined") {
                             _self.$message.error("节点不存在")
-                            console.log(info, _self.chartData.nodes)
                         }
                         // 连线需要记录节点的ID，typeId,type
                         _self.chartData.connections.push({
@@ -382,7 +375,6 @@
                         })
                     } else {
                         _self.$message.info("节点已连接")
-                        console.log("不允许重复连接！");
                     }
                     return !hasSameConn;
                 })
@@ -391,18 +383,15 @@
                     let curConnection = _self.chartData.connections.find((item, index) => {
 
                         if (item.connectionId == conn.id) {
-                            console.log("find connection index:", index);
                             _self.curEditConnectionIndex = index
                             return true;
                         }
                     })
                     if (typeof curConnection == "undefined") {
                         _self.$message.error("连接无效");
-                        console.log("connection:", _self.chartData.connections)
                         return
                     }
 
-                    console.log("click connection:", conn);
                     // 这里的sourceType 和 targetType是指要去获取参数的节点的类型，OnlyInputNode 和 OnlyOutputNode
                     // 都是从子图节点获取的，所以这里加一点操作
                     let sourceType = curConnection.sourceType == NodeType.FlowNode ? NodeType.FlowNode : NodeType.SubGraphNode
@@ -413,10 +402,10 @@
                     let targetItem = _self.nodeList[targetType].find(item => {
                         return item.id == curConnection.targetTypeId
                     })
-                    console.log("source", sourceItem)
-                    console.log("target", targetItem)
+                    // console.log("source", sourceItem)
+                    // console.log("target", targetItem)
                     if (typeof sourceItem == "undefined" || typeof targetItem == "undefined") {
-                        console.log("获取节点失败")
+                        // console.log("获取节点失败")
                         return
                     }
 
@@ -455,13 +444,11 @@
                 $("#paintLimit").droppable({
                     scope: "plant",
                     drop: function (ev, ui) {
-                        console.log("drop event:", ev, ui);
                         if (parseInt(ui.helper.attr("data-type")) == NodeType.SubGraphNode && _self.chartData.id != "mainGap") {
                             _self.$message.info("子图节点不可嵌套")
                             return
                         }
                         // 生成一个id
-                        console.log(_self.$jsPlumbUtil)
                         let id = _self.$jsPlumbUtil.uuid();
                         let item = {
                             id,
@@ -471,7 +458,7 @@
                             typeId: ui.helper.attr("data-typeId"), // 记录是哪种节点
                             nodeStyle: {
                                 top: (ui.position.top + $('#scrollMain').scrollTop() - 100) + "px",
-                                left: (ui.position.left + $('#scrollMain').scrollLeft() - 180)+ "px"
+                                left: (ui.position.left + $('#scrollMain').scrollLeft() - 180) + "px"
                             },
                             inputs: ui.helper.attr("data-input"),
                             outputs: ui.helper.attr("data-output"),
@@ -480,7 +467,6 @@
                         }
                         _self.chartData.nodes.push(item);
                         _self.$nextTick(() => {
-                            console.log("nextTick")
                             _self.initNode(id);
                         })
                     }
@@ -494,7 +480,6 @@
                     })
                 })
 
-                console.log("curChartData:", this.chartData)
                 // 绘制连线
                 this.chartData.connections.forEach(item => {
                     let connection = this.jsp.connect({
@@ -503,6 +488,8 @@
                     });
                     // 设置id
                     $(connection).attr('id', item.connectionId);
+                    // 设置label
+                    connection.setLabel(_self.getLabel(item.attrs))
                 });
 
                 bus.$on("delete_node_in_jsp", (nodeId) => {
@@ -510,17 +497,14 @@
                 })
 
                 bus.$on("delete_node", (type_id) => {
-                    console.log("delete type_id:", type_id);
                     this.deleteNodeWithTypeId(type_id)
                 })
-
             })
         },
         methods: {
             // 初始化新节点属性函数：可拖动，可作为源节点，可作为目标节点
 
             initNode(el) {
-                console.log("init Node:", el)
                 let _self = this;
                 let nodeType = typeof el == Object ? parseInt(el.getAttribute("type")) : NodeType.SubGraphNode
                 this.jsp.draggable(el, {
@@ -533,7 +517,6 @@
                         // console.log(params);
                     },
                     stop(params) {
-                        console.log(params);
                         let id = params.el.id;
                         _self.chartData.nodes.forEach(item => {
                             if (item.id === id) {
@@ -577,7 +560,6 @@
             },
             // 打开节点编辑窗口
             editNode: function (item, index) {
-                console.log("item type:", item.type)
                 if (item.type == this.NodeType.FlowNode) {
                     this.flowNodeDialogVisible = true;
                 } else if (item.type == this.NodeType.SubGraphNode) {
@@ -588,7 +570,7 @@
                 // 复制当前节点信息，以及保存当前节点在数组中的下标
                 this.curNode = JSON.parse(JSON.stringify(item))
                 this.curNodeIndex = index;
-                console.log("curNode:", this.curNode)
+                // console.log("curNode:", this.curNode)
             },
             // 保存正在编辑的节点
             saveEditNode() {
@@ -640,13 +622,13 @@
                     _self.jsp.getConnections({
                         source: _self.chartData.nodes[_self.curNodeIndex].id
                     }).forEach((conn) => {
-                        console.log("delete conn:", conn)
+                        // console.log("delete conn:", conn)
                         _self.jsp.deleteConnection(conn)
                     })
                     _self.jsp.getConnections({
                         target: _self.chartData.nodes[_self.curNodeIndex].id
                     }).forEach((conn) => {
-                        console.log("delete conn:", conn)
+                        // console.log("delete conn:", conn)
                         _self.jsp.deleteConnection(conn)
                     })
                     // _self.jsp.detachAllConnections(_self.chartData.nodes[_self.curNodeIndex].id)
@@ -691,13 +673,11 @@
                         _self.jsp.getConnections({
                             source: _self.chartData.nodes[i].id
                         }).forEach((conn) => {
-                            console.log("delete conn:", conn)
                             _self.jsp.deleteConnection(conn)
                         })
                         _self.jsp.getConnections({
                             target: _self.chartData.nodes[i].id
                         }).forEach((conn) => {
-                            console.log("delete conn:", conn)
                             _self.jsp.deleteConnection(conn)
                         })
                         if (_self.chartData.nodes[i].type == NodeType.SubGraphNode) {
@@ -718,19 +698,16 @@
                 this.jsp.getConnections({
                     source: nodeId
                 }).forEach((conn) => {
-                    console.log("delete conn:", conn)
                     this.jsp.deleteConnection(conn)
                 })
                 this.jsp.getConnections({
                     target: nodeId
                 }).forEach((conn) => {
-                    console.log("delete conn:", conn)
                     this.jsp.deleteConnection(conn)
                 })
             },
             setCodeMirrorValue(codemirrorObj, code) {
                 if (typeof (codemirrorObj) == "undefined") {
-                    console.log("undefined")
                     return
                 }
                 codemirrorObj.codemirror.setValue(code)
@@ -751,14 +728,16 @@
                     target: curConnection.targetId
                 })
                 if (curConnObj[0]) {
-                    if (curConnection.attrs.length > 0) {
-                        let connLabel = curConnection.attrs[0].input + "-" + curConnection.attrs[0].output
-                        connLabel += curConnection.attrs.length > 1 ? ",..." : ""
-                        console.log("cur label:", connLabel);
-                        curConnObj[0].setLabel(connLabel);
-                    }
+                    curConnObj[0].setLabel(this.getLabel(curConnection.attrs))
                 }
                 this.connectionVisible = false;
+            },
+            getLabel(attrs) {
+                if (typeof attrs == "undefined" || attrs.length == 0)
+                    return ""
+                let connLabel = attrs[0].input + "-" + attrs[0].output
+                connLabel += attrs.length > 1 ? ",..." : ""
+                return connLabel;
             },
             deleteConn() {
                 let _self = this;
@@ -776,7 +755,7 @@
                         source: _self.chartData.connections[_self.curEditConnectionIndex].sourceId,
                         target: _self.chartData.connections[_self.curEditConnectionIndex].targetId
                     })
-                    console.log("conn index:", _self.curEditConnectionIndex, "get conn:", conn)
+                    // console.log("conn index:", _self.curEditConnectionIndex, "get conn:", conn)
                     if (conn[0] != null) {
                         _self.jsp.deleteConnection(conn[0])
                     }
@@ -810,7 +789,6 @@
                         }
                         return false
                     })[0]
-                    console.log(curAttr)
                     if (curAttr != undefined) {
                         _self.$message.info("该参数情况已存在")
                     } else {
@@ -861,42 +839,6 @@
                 for (let i = 0; i < length; i++)
                     n += t.charAt(Math.floor(Math.random() * a));
                 return n
-            },
-            drop: function (e) {
-                let data = e.dataTransfer.getData("id");  //获得拖拉元素的id
-                console.log("data:", data);
-                if (this.isDragFromTemplate) {
-                    // let flowerContainer = document.createElement("el-button",{
-                    //     style:{
-                    //         'width':'20px',
-                    //         'height':'20px'
-                    //     }
-                    // });
-                    e.preventDefault();
-                    let randomNum = e.dataTransfer.getData("randomNum");
-                    let flowerContainer = $("#" + data).clone(true, true)[0]
-                    // let flowerContainer = document.getElementById(data).cloneNode(true)
-                    flowerContainer.id += randomNum;
-                    // flowerContainer.draggable();
-                    console.log(flowerContainer)
-                    // document.getElementById(data).cloneNode(true)
-                    // 缓存 鼠标点击时 的位置
-                    // 将创建的 DIV 元素 的位置设置为鼠标点击的位置
-                    // flowerContainer.cli
-                    let newX = e.offsetX;
-                    let newY = e.offsetY;
-                    console.log("offsetX: ", newX, " offsetY: ", newY)
-                    flowerContainer.style.left = newX + "px";
-                    flowerContainer.style.top = newY + "px";
-                    flowerContainer.style.position = "relative"
-                    $('#paint-area')[0].appendChild(flowerContainer);
-                    $("#" + flowerContainer.id).draggable();
-                    this.$forceUpdate()
-                    // let cloneNode = $('#paint-area')[0].appendChild(document.getElementById(data).cloneNode(true));//cloneNode()参数为true，实现复制拖拉元素
-                    // console.log(cloneNode)
-                }// cloneNode.x
-                this.isDragFromTemplate = false;
-                console.log("drop", e)
             },
 
         },

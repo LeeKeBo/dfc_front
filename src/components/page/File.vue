@@ -6,7 +6,7 @@
                     <el-tab-pane label="上传文件">
                         <el-form ref="uploadForm" :rules="formRules" :model="uploadForm" label-width="100px">
                             <el-form-item label="选择文件">
-                                <el-upload action="/api/dfcCode/storeFile" :file-list="fileList"
+                                <el-upload action="/api/fileOpera/storeFile" :file-list="fileList"
                                            :on-success="handleUploadFile">
                                     <el-button size="small" type="primary">点击上传</el-button>
                                 </el-upload>

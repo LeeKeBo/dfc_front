@@ -1,5 +1,6 @@
 <template>
-    <el-container class="container" id="work-container">
+    <el-container class="container" id="work-container" v-loading="loading" element-loading-text="文件解析中"
+                  element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
 
         <!--            属性修改弹窗-->
         <el-dialog width="60%" title="属性编辑" :visible.sync="innerVisible" :close-on-click-modal=false>
@@ -131,7 +132,8 @@
             </div>
         </el-dialog>
         <!--            子图节点弹窗-->
-        <el-dialog title="子图节点信息编辑" :visible.sync="dialogVisibleList[NodeType.SubGraphNode]" :close-on-click-modal=false>
+        <el-dialog title="子图节点信息编辑" :visible.sync="dialogVisibleList[NodeType.SubGraphNode]"
+                   :close-on-click-modal=false>
             <el-form>
                 <el-form-item label="子图名">
                     <el-input v-model="curNode.name"></el-input>
@@ -295,6 +297,7 @@
                                     :show-file-list=false
                                     :limit="1"
                                     accept=".json"
+                                    :before-upload="beforeUpload"
                                     :on-exceed="handleExceed"
                                     :on-success="handleUpload"
                                     :file-list="fileList">
@@ -326,7 +329,6 @@
     import vTags from "@/components/common/Tags";
     import 'jsplumb'
     import bus from "@/components/common/Bus";
-    import fileDownload from 'js-file-download'
 
     const NodeType = {
         StructNode: 0,      // 结构体节点
@@ -394,7 +396,7 @@
                 activeTab: 'second',
                 typeList: [
                     "void", "int", "string", "long", "short", "char"
-                ],                            // 当前可用的节点类型数组
+                ],                                          // 当前可用的节点类型数组
                 list: [
                     {
                         icon: "el-icon-menu",
@@ -424,9 +426,10 @@
                 funcList: [],
                 structList: [],
                 subGraphList: [],
-                currentGapId: 'mainGap',         // 当前编辑的图ID，一个id对应一个路由
+                currentGapId: 'mainGap',                        // 当前编辑的图ID，一个id对应一个路由
                 fileList: [],
-                errorNodes: [],                   // 记录判断后出错的节点
+                errorNodes: [],                                 // 记录判断后出错的节点
+                loading: false,                                 //
             }
         },
         computed: {
@@ -466,13 +469,6 @@
         mounted() {
             // console.log("nodes:", this.chartData.nodes);
             const _self = this;
-            // 注册一个修改子图的时间,参数为子图id,也作为路由地址
-            // bus.$on('edit_sub_gap', (subGraphNode) => {
-            //     _self.setTags("/edit/" + subGraphNode.id)
-            //     _self.currentGapId = subGraphNode.id
-            //     this.$router.push("/edit/" + subGraphNode.id)
-            //     // _self.curChartData = subGraphNode.chartData
-            // })
             // 注册一个删除子图节点触发的删除tag的时间
             bus.$on('delete_tag', (tagId) => {
                 // console.log("delete_tag", tagId)
@@ -503,6 +499,10 @@
             })
             // 给属性添加使用标记
             bus.$on('add_conn', (type, typeId, isInput, attrIndex) => {
+                // 虚拟的input和output节点不需要做属性标记
+                if (type == NodeType.OnlyOutputNode || type == NodeType.OnlyInputNode) {
+                    return
+                }
                 for (let i = 0; i < this.nodeList[type].length; i++) {
                     // 输出参数是作为边的输入端，所以是输入端，需要修改的就是输出数组
                     if (this.nodeList[type][i].id == typeId) {
@@ -569,6 +569,7 @@
                 } else if (type == NodeType.FlowNode) {
                     if (isNew) {
                         _self.curNode.name = "func_" + _self.randomString(6)
+                        _self.curNode.returnType = "void"
                     } else {
                         _self.setCodeMirrorValue(_self.$refs.flowCode, _self.curNode.code);
 
@@ -862,7 +863,7 @@
                 });
             },
             setTags(route) {
-                console.log("get route:", route)
+                // console.log("get route:", route)
                 // console.log("")
                 let isExist = this.tagsList.some(item => {
                     return item.path == route
@@ -876,11 +877,11 @@
                         path: route,
                         name: route
                     })
-                    console.log("set tagList:", this.tagsList)
+                    // console.log("set tagList:", this.tagsList)
                 }
             },
             getCurGap() {
-                console.log("get curGap nodeList: ", this.nodeList)
+                // console.log("get curGap nodeList: ", this.nodeList)
                 // 主图则直接返回
                 if (this.currentGapId == "mainGap")
                     return this.chartData
@@ -893,37 +894,12 @@
                 }
                 return null
             },
-            getCurGap1(chartData) {
-                // 主图则直接返回
-                if (this.currentGapId == "mainGap")
-                    return this.chartData
-                let resGap = null
-                if (chartData == null || chartData.nodes == null) {
-                    console.log("chartData is null", chartData, " currentGapId", this.currentGapId)
-                    return resGap
-                }
-                for (let index in chartData.nodes) {
-                    let item = chartData.nodes[index]
-                    // console.log(item)
-                    if (item.type == NodeType.SubGraphNode) {
-                        if (item.id == this.currentGapId) {
-                            return item
-                        } else {
-                            resGap = this.getCurGap(item)
-                            if (resGap != null)
-                                return resGap
-                        }
-                    }
-                }
-                return null
-            },
             // 编辑子图，即弹开子图编辑页面
             EditSubGap() {
-                console.log("click")
                 let _self = this;
                 if (_self.curNode == null || _self.curNode.type != _self.NodeType.SubGraphNode) {
                     _self.$message.error("非子图节点，或节点无效")
-                    console.log("curNode:", _self.curNode)
+                    // console.log("curNode:", _self.curNode)
                 }
                 let haveThisSubGap = _self.nodeList[NodeType.SubGraphNode].find(item => {
                     return item.id == _self.curNode.id
@@ -953,7 +929,7 @@
                 }
                 let resGap = null
                 if (chartData == null || chartData.nodes == null) {
-                    console.log("chartData is null", chartData, " currentGapId", this.currentGapId)
+                    // console.log("chartData is null", chartData, " currentGapId", this.currentGapId)
                     return
                 }
                 for (let index in chartData.nodes) {
@@ -963,7 +939,6 @@
                         if (item.id == this.currentGapId) {
                             item.nodes = []
                             item.connections = []
-                            console.log("set item", item, newValue)
                             break;
                         } else {
                             this.getCurGap(item, newValue)
@@ -987,7 +962,6 @@
             },
             cleanOut() {
                 let _self = this;
-                console.log("清空")
                 this.$confirm('是否清空该图?', '提示', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
@@ -1054,6 +1028,9 @@
                 }).catch(() => {
                 })
             },
+            beforeUpload(file) {
+                this.loading = true;
+            },
             handleExceed(files, fileList) {
                 this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
             },
@@ -1068,7 +1045,6 @@
                     reader.readAsText(file.raw)
                     reader.onload = ((e) => {
                         let _self = this;
-                        console.log(e)
                         try {
                             let tempRes = JSON.parse(window.atob(e.target.result))
                             // todo  这里先简单判断，之后写判断函数
@@ -1083,7 +1059,6 @@
                                 this.tagsList = []
                             }
                         } catch (error) {
-                            console.log("upload error ", error)
                             _self.$message.error("文件解析有误")
                         }
                         // 清空上传的文件列表和
@@ -1093,15 +1068,14 @@
                 }).catch(() => {
 
                 })
-
-
+                this.loading = false
             },
             // BFS,返回连通子图块数,参数为节点+邻接表格式的边列表,这个BFS有点不同，
             // 这里会将有向图当做无向图来做BFS，因此使用边列表和反向边一起BFS
             BFS(nodes, conns, diffConns) {
                 // console.log("get node:",nodes)
-                console.log("get conn:", conns)
-                console.log("get diffConn:", diffConns)
+                // console.log("get conn:", conns)
+                // console.log("get diffConn:", diffConns)
                 let visitedNodes = new Object()
                 let count = 0
                 // 这里做一下预处理，将结构体节点排除出去，因为结构体节点是不带边的
@@ -1146,7 +1120,7 @@
             },
             // 判断连线的合法性,包括每一个子图都需要检查
             judgeConnectionLegality(chartData) {
-                console.log("get judge data:", chartData)
+                // console.log("get judge data:", chartData)
                 // let _self = this;
                 if (chartData == null || chartData.nodes == null || chartData.nodes.length == 0) {
                     return true
@@ -1154,7 +1128,7 @@
                 let connLegal = true
                 // 这里要判断边是否携带参数信息，不携带则认为是无效边
                 chartData.connections.every((item, index, array) => {
-                    console.log(item); //返回1,2
+                    // console.log(item); //返回1,2
                     if (typeof item.attrs == "undefined" || item.attrs.length == 0) {
                         setTimeout(() => {
                             this.$message.info("有边不携带参数信息")
@@ -1175,7 +1149,7 @@
                 let stack = new Array()
                 for (let index in chartData.connections) {
                     let conn = chartData.connections[index]
-                    console.log("get conn:", conn.sourceId, conn.sourceId)
+                    // console.log("get conn:", conn.sourceId, conn.sourceId)
                     if (conns[conn.sourceId] == null)
                         conns[conn.sourceId] = new Array();
                     if (diffConns[conn.targetId] == null)
@@ -1188,14 +1162,13 @@
                     diffConns[conn.targetId].push(conn.sourceId)
                     inputs[conn.targetId] += 1
                 }
-                console.log("get conns:", conns)
+                // console.log("get conns:", conns)
                 // 使用BFS判断连通片个数
                 let connectionCount = this.BFS(chartData.nodes, conns, diffConns)
                 if (connectionCount > 1) {
                     this.$message.error("该图未连成一个完整的图，请补充边信息")
                     return false;
                 }
-                console.log("get inpus:", inputs)
                 // 使用拓扑排序判断是否成环
                 for (let key in inputs) {
                     if (inputs[key] == 0) {
@@ -1246,7 +1219,7 @@
                     judgeRes &= this.judgeConnectionLegality(this.nodeList[NodeType.SubGraphNode][i])
                 }
                 let timeAfter = new Date()
-                console.log("judge time:",timeAfter.getTime() - timeBefore.getTime() , " ms")
+                console.log("judge time:", timeAfter.getTime() - timeBefore.getTime(), " ms")
                 console.log("judge res: ", judgeRes)
                 if (judgeRes) {
                     // this.$message.success("检测通过")
@@ -1258,16 +1231,15 @@
                             'Content-Type': 'application/json'
                         }
                     }).then(response => {
-                        console.log("response:", response)
+                        // console.log("response:", response)
                         let fileName = "dfcCode_" + this.getNowTimeStr() + ".dfc"
-                        // fileDownload(response.data, fileName)
+                        _self.downloadFile("/api/fileOpera/downloadFile", response.data["dfcCode"],)
+                        _self.downloadFile("/api/fileOpera/downloadFile", response.data["graphCode"],)
                         _self.$message.success("生成代码成功")
                     }).catch(error => {
-                        console.log("error: ", error)
+                        // console.log("error: ", error)
                         _self.$message.error("生成代码失败")
                     })
-
-
                 } else {
                     setTimeout(() => {
                         this.$message.error("检测未通过")
@@ -1297,6 +1269,21 @@
                 second += date.getSeconds()
                 return date.getFullYear() + "-" + month + "-" + day + "_"
                     + hour + "-" + minute + "-" + second
+            },
+            // 使用iFrame来模拟文件下载，使用a标签会导致连续下载出错
+            downloadFile(url, fileName) {
+
+                const iframe = document.createElement("iframe");
+                iframe.style.display = "none"; // 防止影响页面
+                iframe.style.height = 0; // 防止影响页面
+                iframe.src = url + "?fileName=" + fileName;
+                document.body.appendChild(iframe); // 这一行必须，iframe挂在到dom树上才会发请求
+                iframe.click()
+                // 1分钟以后删除
+                setTimeout(() => {
+                    iframe.remove();
+                }, 1 * 60 * 1000);
+
             }
         },
         components: {
