@@ -980,13 +980,15 @@
                         _self.nodeList[NodeType.SubGraphNode].forEach(item => {
                             if (item.id == _self.currentGapId) {
                                 item.nodes.forEach(node => {
-                                    bus.$emit("delete_node_in_jsp", item.id)
+                                    if(node.type != NodeType.OnlyInputNode && node.type != NodeType.OnlyOutputNode){
+                                        bus.$emit("delete_node_in_jsp", node.id)
+                                    }
                                 })
-                                item.nodes = []
+                                item.nodes = item.nodes.slice(0,2)
                                 item.connections = []
-                                _self.tagsList = _self.tagsList.filter(tag => {
-                                    return tag != _self.currentGapId
-                                })
+                                // _self.tagsList = _self.tagsList.filter(tag => {
+                                //     return tag != _self.currentGapId
+                                // })
                             }
                         })
                     }
@@ -1061,13 +1063,12 @@
                         } catch (error) {
                             _self.$message.error("文件解析有误")
                         }
-                        // 清空上传的文件列表和
-                        this.fileList = []
-
                     })
                 }).catch(() => {
 
                 })
+                // 清空上传的文件列表和
+                this.fileList = []
                 this.loading = false
             },
             // BFS,返回连通子图块数,参数为节点+邻接表格式的边列表,这个BFS有点不同，
