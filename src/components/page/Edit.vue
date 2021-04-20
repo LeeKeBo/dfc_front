@@ -311,10 +311,10 @@
                 <!--            按钮区-->
 
                 <div id="node-place" style="height: 100%">
-                    <!--                <PaintArea></PaintArea>-->
-                    <keep-alive>
-                        <router-view :nodeList="nodeList" :chartData="curChartData" :key="randomKey()"></router-view>
-                    </keep-alive>
+                    <PaintArea :nodeList="nodeList" :chartData="curChartData"></PaintArea>
+                    <!--                    <keep-alive>-->
+                    <!--                        <router-view :nodeList="nodeList" :chartData="curChartData" :key="randomKey()"></router-view>-->
+                    <!--                    </keep-alive>-->
                 </div>
             </el-main>
         </el-container>
@@ -327,6 +327,7 @@
 <script>
     import $ from 'jquery'
     import vTags from "@/components/common/Tags";
+    import vPaintArea from "@/components/common/PaintArea";
     import 'jsplumb'
     import bus from "@/components/common/Bus";
 
@@ -790,6 +791,14 @@
                         type: 'success',
                         message: '保存成功!'
                     });
+                    this.$nextTick(() => {
+                        $(".box-card .canDraggable ").draggable({
+                            scope: "plant",
+                            helper: "clone",
+                            containment: '#work-container'
+                        })
+                    })
+
                     _self.dialogVisibleList.splice(_self.curNode.type, 1, false)
 
                 }).catch(() => {
@@ -980,11 +989,11 @@
                         _self.nodeList[NodeType.SubGraphNode].forEach(item => {
                             if (item.id == _self.currentGapId) {
                                 item.nodes.forEach(node => {
-                                    if(node.type != NodeType.OnlyInputNode && node.type != NodeType.OnlyOutputNode){
+                                    if (node.type != NodeType.OnlyInputNode && node.type != NodeType.OnlyOutputNode) {
                                         bus.$emit("delete_node_in_jsp", node.id)
                                     }
                                 })
-                                item.nodes = item.nodes.slice(0,2)
+                                item.nodes = item.nodes.slice(0, 2)
                                 item.connections = []
                                 // _self.tagsList = _self.tagsList.filter(tag => {
                                 //     return tag != _self.currentGapId
@@ -1288,7 +1297,8 @@
             }
         },
         components: {
-            vTags
+            vTags,
+            PaintArea: vPaintArea
         }
 
     }

@@ -304,6 +304,31 @@
 
         },
         updated() {
+            let _self = this
+            console.log("endpoint num", this.jsp.getEndpoints(".workplace-chart"))
+            this.jsp.deleteEveryConnection();
+            this.jsp.deleteEveryEndpoint();
+
+            this.jsp.batch(() => {
+                _self.$jsPlumb.getSelector(".workplace-chart").forEach(item => {
+                    console.log("initNode:", item)
+                    _self.initNode(item);
+                })
+
+            })
+
+            _self.chartData.connections.forEach(item => {
+                let connection = _self.jsp.connect({
+                    source: item.sourceId,
+                    target: item.targetId
+                });
+                // 设置id
+                console.log("conn", connection)
+                $(connection).attr('id', item.connectionId);
+                // 设置label
+                connection.setLabel(_self.getLabel(item.attrs))
+            });
+
         },
         mounted() {
             // console.log("mounted paintArea")
@@ -344,11 +369,13 @@
                 this.jsp = instance;
                 instance.bind("connection",
                     function (info) {
-
+                        // console.log(info)
                     });
+                // Todo: 这里有点问题，一次连线会多次触发，待排查
                 instance.bind("beforeDrop", function (info) {
                     // console.log("beforeDrop", info);
                     // 判断是否已有该连接
+                    // console.log("beforeDrop :", info)
                     let hasSameConn = false;
                     _self.chartData.connections.some(function (item) {
                         if ((item.targetId == info.targetId && item.sourceId == info.sourceId) ||
@@ -374,7 +401,7 @@
                             attrs: []
                         })
                     } else {
-                        _self.$message.info("节点已连接")
+                        // _self.$message.info("节点已连接")
                     }
                     return !hasSameConn;
                 })
@@ -430,11 +457,11 @@
 
                 });
                 // 可拖动
-                $(".box-card .canDraggable ").draggable({
-                    scope: "plant",
-                    helper: "clone",
-                    containment: '#work-container'
-                })
+                // $(".box-card .canDraggable ").draggable({
+                //     scope: "plant",
+                //     helper: "clone",
+                //     containment: '#work-container'
+                // })
                 // $(".box-card .item ").draggable({
                 //     scope: "plant",
                 //     helper: "clone",
@@ -472,25 +499,6 @@
                     }
                 });
 
-
-                // 绘制端点
-                instance.batch(() => {
-                    _self.$jsPlumb.getSelector(".workplace-chart").forEach(item => {
-                        _self.initNode(item);
-                    })
-                })
-
-                // 绘制连线
-                this.chartData.connections.forEach(item => {
-                    let connection = this.jsp.connect({
-                        source: item.sourceId,
-                        target: item.targetId
-                    });
-                    // 设置id
-                    $(connection).attr('id', item.connectionId);
-                    // 设置label
-                    connection.setLabel(_self.getLabel(item.attrs))
-                });
 
                 bus.$on("delete_node_in_jsp", (nodeId) => {
                     this.deleteNodeInJsp(nodeId)
